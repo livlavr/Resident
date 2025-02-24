@@ -1,100 +1,79 @@
 .model tiny
-.186
 .code
+.186
+locals @@
 org 100h
-locals
-;####################################################################|
-;--------------------------------------------------------------------|
-VIDEOSEG	equ 0b800h
-SCREENL		equ 050h
-SCREENW		equ 019h
-;--------------------------------------------------------------------|
-; F9 - commands - memory info - perexvaty -> release = klava rabotaet
-; system queue after interruption list?
-; zapisyvautsya scan codes nazhatiy poka naprimer volkov otrisovyvaet sebya
-; max 15 scan codes
-; 16H 00H - analog getchar()
-; appartny kolzevoy buffer v klave
-; preobrazovanie scan code to ascii code
 
-Start:
-	xor ax, ax
-	mov es, ax
-	mov bx, 09h * 4 ; interruption number (09H) * 4
-			; cause every address takes 2 byte (segment + shift)
+VIDEOSEG	equ	0b800h
 
-	; nuzhen teper stary obrabotchik
-	mov ax, es:[bx]
-	mov Old09Ofs, ax ; ax?
-	mov ax, es:[bx + 2]
-	mov Old09Seg, ax ; ax?
+Main:
+	xor ax, ax		                ; ax = 0
+	mov es, ax		                ; es = 0
 
-	; IMPORTANT LINE ;
-	cli
-	; IMPORTANT LINE ;
+	mov bx, 09h * 4		            ; 09h interruption
+				                    ; 4 bytes for address
 
-	mov es:[bx], offset New09 ; my interrupt function
+	mov ax, es:[bx]                 ;
+	mov Old09Ofs, ax                ; save old int09h address
+	mov ax, es:[bx + 2]             ;
+	mov Old09Seg, ax                ;
 
-	push cs
-	pop ax
+	cli			                    ; if = 0 (clear if)
 
-	mov es:[bx+2], ax ; put segment address
+	mov es:[bx], offset newInt09	; set offset (fow newInt09)
+                                    ; remember about little endian
+                                    ; because of it in memory: offset:segment
 
-	; IMPORTANT LINE ;
-	sti
-	; IMPORTANT LINE ;
+	push cs				            ; ax = cs
+	pop ax				            ;
 
-	int 09h ; CHECKER
+	mov es:[bx + 2], ax		        ; set segment address
 
-	mov ax, 3100h
-	mov dx, offset EOP
-	shr dx, 4
-	inc dx		 ; last paragraph
-	int 21h
+	sti			                    ; if = 1 (set if)
 
-;-----------------------------------------------------------------|
+	;int 09h
 
-New09	proc
+	mov ah, 31h		                ; exit with reserving memory for resident
+	mov dx, offset EOF
+	shr dx, 4		                ; 31h counts in paragraphs
+	inc dx                          ; to make sure everything in memory
+	int 21h                         ; exit(with resident state)
 
-	push ax bx cx dx es ds		; save AX, ES, DI
+newInt09	proc
 
-	mov ax, VIDEOSEG
-	mov es, ax
-	mov ah, 4ch
-	mov di, 5*80*2
+	push ax bx cx dx si di ds es	; save registers not to fuck them up
 
-	cld
+    mov ax, VIDEOSEG                ; set videomemory
+    mov es, ax                      ; in es
 
-	;call PrintRegisters
+	mov ah, 4eh                     ; red back - yellow fore
+	mov di, 5 * 80 * 2              ; 5th line
 
-	in al, 60H
-	stosw
+	cld                             ; df = 0 (++)
 
-	jmp ChainOldISR 	; jump to old ISR
+    in al, 60h                      ; al = scancode
+    stosw                           ; es:[di++] = ax
 
-	; nuzhno chtoby kontroller vozobnovil obrabotky preryvani
-	; signal chto preryvanie obrabotano
-	; podacaha signala EOI (end of interrupt)
+	in al, 61h		;
+	mov ah, al		; blink enable/disable keyboard
+	or al, 80h		; to let keyboard controller know
+	out 61h, al		; that changes done
+	mov al, ah		;
+	out 61h, al		; Keyboard Controller needs it
 
-	; teper mozhno vozvrachatsya
-	; forma vozvrata iret - interrupt return - vozvrachaetsya na adress
-	; i vosstanavliavet flagi
-	; else disbalance stacka
+	mov al, 20h		; send End of Interrupt signal
+	out 20h, al		; Interrupt Controllet needs it
+
+	pop es ds di si dx cx bx ax		; revive registers
+				                    ; done your deel - return former registers
+
+ChainOldISR:                        ; address of the old int09h
+	db 0eah                         ;   jmp in bytes
+Old09Ofs	dw 0                    ;   offset - changes in line 17
+Old09Seg	dw 0                    ;   segment - changes in line 19
 
 	iret
-
-include printreg.asm
-
-ChainOldISR:	; Chain to old interrupt service routine
-		pop ds es dx cx bx ax
-
-		db 0eah
-Old09Ofs	dw 0
-Old09Seg	dw 0
-
 	endp
 
-EOP:
-
-end 	Start
-;####################################################################|
+EOF:
+end		Main
