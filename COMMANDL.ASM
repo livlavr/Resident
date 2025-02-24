@@ -5,7 +5,6 @@
 ;--------------------------------------------------------------------|
 GetCMDLArgs	proc
 
-		mov si, 82h
 		call GetNumber			; bl = length of frame
 		mov dl, bl
 		call GetNumber			; bl = Height of frame

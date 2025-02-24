@@ -12,12 +12,7 @@ VIDEOSEG equ 0b800h
 ; appartny kolzevoy buffer v klave
 ; preobrazovanie scan code to ascii code
 
-Start:	mov ah, 09h
-	mov dx, offset String
-	int 21h
-
-	; ====================================================== ;
-
+Start:
 	xor ax, ax
 	mov es, ax
 	mov bx, 09h * 4 ; interruption number (09H) * 4
@@ -52,9 +47,7 @@ Start:	mov ah, 09h
 	inc dx		 ; last paragraph
 	int 21h
 
-	; ====================================================== ;
-
-; ################################# ;
+;-----------------------------------------------------------------|
 
 New09	proc
 
@@ -72,21 +65,9 @@ New09	proc
 
 	jmp ChainOldISR 	; jump to old ISR
 
-	in al, 61h
-	mov ah, al
-	or al, 80h
-	out 61h, al
-	mov al, ah
-	out 61h, al ; migaem starshim bitom v 61 porty
-
 	; nuzhno chtoby kontroller vozobnovil obrabotky preryvani
 	; signal chto preryvanie obrabotano
 	; podacaha signala EOI (end of interrupt)
-
-	mov al, 20h
-	out 20h, al
-
-	pop es di ax	; restore ES, DI, AX
 
 	; teper mozhno vozvrachatsya
 	; forma vozvrata iret - interrupt return - vozvrachaetsya na adress
@@ -96,17 +77,13 @@ New09	proc
 	iret
 
 ChainOldISR:	; Chain to old interrupt service routine
-		;
 		pop es di ax
 
 		db 0eah
-
 Old09Ofs	dw 0
 Old09Seg	dw 0
 
 	endp
-
-String	db "Hello", 0dh, 0ah, '$'
 
 EOP:
 

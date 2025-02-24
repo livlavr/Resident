@@ -1,0 +1,143 @@
+[] Просто пикнуть, просто тихо пикнуть...
+[] Вывод регистров
+    [] Прога, которая выводит текущее значение регистра AX (не важно где)
+        [] Кладу в место в памяти для итерапта таймера (thelp) указатель на свою процедуру
+        {
+            xor ax, ax
+	        mov es, ax
+	        mov bx, 09h * 4 ; interruption number (09H) * 4
+	        		; cause every address takes 2 byte (segment + shift)
+
+	        ; nuzhen teper stary obrabotchik
+	        mov ax, es:[bx]
+	        mov Old09Ofs, ax ; ax?
+	        mov ax, es:[bx + 2]
+	        mov Old09Seg, ax ; ax?
+
+	        ; IMPORTANT LINE ;
+	        cli
+	        ; IMPORTANT LINE ;
+
+	        mov es:[bx], offset New09 ; my interrupt function
+
+	        push cs
+	        pop ax
+
+	        mov es:[bx+2], ax ; put segment address
+
+	        ; IMPORTANT LINE ;
+	        sti
+	        ; IMPORTANT LINE ;
+
+	        int 09h ; CHECKER
+
+	        mov ax, 3100h
+	        mov dx, offset EOP
+	        shr dx, 4
+	        inc dx		 ; last paragraph
+	        int 21h
+        }
+        [] Для начала пикаю каждую секунду (55мс)
+        [] В своей процедуре принтить регистр AX (взять принт из рамочки)
+[] Берутся текущие значения регистров и показываются на экране
+[] Для того, чтобы непрерывно смотреть на регистры необходимо будет держать клавишу нажатой, но это не супер круто (годится для промежуточной стадии 09h)
+[] Супер-круто это когда шорткат отвечает лишь за включение/выключение утилиты, а сами регистры обновляются по таймеру (08h)
+[] Анализируем SCAN код в 60 порту
+[] Можно просто создать переменную внутри программы: 1 - показывать  рамку, 0 - не показывать
+[] 08h - постоянно вызывается даже если не надо рисовать рамочку
+[] Посмотрели на переменную: если надо рисовать, то рисуем, потом прыгаем на старый обработчик. Если не надо, то сразу прыгаем на старый обработчик.
+[] **Нюанс:** `mov Active, 1` - плохо работает, потому что считает адрес относительно сегмента ds, а этот сегмент, после завершения нашей программы уже поменялся, так как запустился VC. Таким образом мы засрем память volkov commander-у. **Вывод**: можно верить только сегменту cs, потому что если наш код исполняется, то по определению он указывает на него. **Пишем:** `mov cs:Active, 1`
+[] Рамочку подключать в последнюю очередь
+[] Чтение регистров в hex
+[] Вспомогательная прога: в цикле кладет в ax - 1111, bx - 2222, cx - 3333, dx - 4444, пока в 60 порту не появится стоп-символ
+
+Код_с_семинара() {
+	xor ax, ax
+	mov es, ax
+	mov bx, 09h * 4 ; interruption number (09H) * 4
+			; cause every address takes 2 byte (segment + shift)
+
+	; nuzhen teper stary obrabotchik
+	mov ax, es:[bx]
+	mov Old09Ofs, ax ; ax?
+	mov ax, es:[bx + 2]
+	mov Old09Seg, ax ; ax?
+
+	; IMPORTANT LINE ;
+	cli
+	; IMPORTANT LINE ;
+
+	mov es:[bx], offset New09 ; my interrupt function
+
+	push cs
+	pop ax
+
+	mov es:[bx+2], ax ; put segment address
+
+	; IMPORTANT LINE ;
+	sti
+	; IMPORTANT LINE ;
+
+	int 09h ; CHECKER
+
+	mov ax, 3100h
+	mov dx, offset EOP
+	shr dx, 4
+	inc dx		 ; last paragraph
+	int 21h
+;--------------------------------------------------------------------|
+New09	proc
+
+	push ax es di		; save AX, ES, DI
+
+	mov ax, VIDEOSEG
+	mov es, ax
+	mov ah, 4ch
+	mov di, 5*80*2
+
+	cld
+
+	in al, 60H
+	stosw
+
+	jmp ChainOldISR 	; jump to old ISR
+
+	in al, 61h
+	mov ah, al
+	or al, 80h
+	out 61h, al
+	mov al, ah
+	out 61h, al ; migaem starshim bitom v 61 porty
+
+	; nuzhno chtoby kontroller vozobnovil obrabotky preryvani
+	; signal chto preryvanie obrabotano
+	; podacaha signala EOI (end of interrupt)
+
+	mov al, 20h
+	out 20h, al
+
+	pop es di ax	; restore ES, DI, AX
+
+	; teper mozhno vozvrachatsya
+	; forma vozvrata iret - interrupt return - vozvrachaetsya na adress
+	; i vosstanavliavet flagi
+	; else disbalance stacka
+
+	iret
+
+ChainOldISR:	; Chain to old interrupt service routine
+	pop es di ax
+
+	        db 0eah
+Old09Ofs	dw 0
+Old09Seg	dw 0
+
+	endp
+
+String	db "Hello", 0dh, 0ah, '$'
+
+EOP:
+
+end 	Start
+
+}

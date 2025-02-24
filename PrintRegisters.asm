@@ -1,24 +1,4 @@
-.model tiny
-.186
-.code
-org 100h
-locals
 ;--------------------------------------------------------------------|
-VIDEOSEG	equ 0b800h
-SCREENL		equ 050h
-SCREENW		equ 019h
-; TODO change defines
-;--------------------------------------------------------------------|
-; Enter:  DI
-; Broke:  AX
-; Output: DI*160
-;
-; Description:
-; ax = di
-; di *= 2^7
-; ax *= 2^5
-; di += ax
-;--------------------------------------------------------------------|2
 DI_MUL_160	macro
 		mov ax, di
 		shl di, 7
@@ -26,14 +6,12 @@ DI_MUL_160	macro
 		add di, ax
 endm
 ;--------------------------------------------------------------------|
-; DH - X coord the start of frame
-; DL - Y coord the start of frame
-; BH - Lenght of frame
-; BL - Height of frame
+; FrameColor	equ 20h
+; Style			equ 3
 ;--------------------------------------------------------------------|
-Start:		call GetCMDLArgs
+;--------------------------------------------------------------------|
+PrintRegisters proc
 
-		;mov byte ptr si, offset String
 		mov si, String
 		call SetFramePosition
 		push di
@@ -47,10 +25,8 @@ Start:		call GetCMDLArgs
 		pop di
 		call PrintMessage
 
-		mov ax, 4c00h			; return 0
-		int 21h
-
-include CommandLine.asm
+        ret
+PrintRegisters endp
 
 ;--------------------------------------------------------------------|
 ; Enter:  DX, SI - String to print
@@ -228,7 +204,7 @@ CountLength:	lodsb				; al = ds:[si++]
 GetStringLength	endp
 ;--------------------------------------------------------------------|
 .data
-String		dw 0
+String		dw "WORKING TEST$"
 FramesArray	db "*-*I I*-*"
 		db "@#@# #@#@"
 		db "$~$+ +$~$"
@@ -239,4 +215,3 @@ FramesArray	db "*-*I I*-*"
 Style		dw 0
 FrameColor	db 0
 ;--------------------------------------------------------------------|
-end		Start
