@@ -4,28 +4,24 @@
 locals @@
 org 100h
 
-VIDEOSEG	equ	0b800h
-
 Main:
 	xor ax, ax		                ; ax = 0
 	mov es, ax		                ; es = 0
 
-	mov bx, 09h * 4		            ; 09h interruption
-				                    ; 4 bytes for address
+	mov bx, 09h * 4		                ; 09h interruption
+				                ; 4 bytes for address
+	mov ax, es:[bx]                 	
+	mov Old09Ofs, ax               		; save old int09h address
+	mov ax, es:[bx + 2]             	;
+	mov Old09Seg, ax                	;
 
-	mov ax, es:[bx]                 ;
-	mov Old09Ofs, ax                ; save old int09h address
-	mov ax, es:[bx + 2]             ;
-	mov Old09Seg, ax                ;
+	cli			                ; if = 0 (clear if)
 
-	cli			                    ; if = 0 (clear if)
-
-	mov es:[bx], offset newInt09	; set offset (fow newInt09)
-                                    ; remember about little endian
-                                    ; because of it in memory: offset:segment
-
-	push cs				            ; ax = cs
-	pop ax				            ;
+	mov es:[bx], offset cs:newInt09		; set offset (fow newInt09)
+        	                    		; remember about little endian
+                	                   	; because of it in memory: offset:segment
+	push cs				        ; ax = cs
+	pop ax				        ;
 
 	mov es:[bx + 2], ax		        ; set segment address
 
@@ -43,16 +39,19 @@ newInt09	proc
 
 	push ax bx cx dx si di ds es	; save registers not to fuck them up
 
-    mov ax, VIDEOSEG                ; set videomemory
-    mov es, ax                      ; in es
+	;mov ax, VIDEOSEG                ; set videomemory
+	;mov es, ax                      ; in es
 
-	mov ah, 4eh                     ; red back - yellow fore
-	mov di, 5 * 80 * 2              ; 5th line
+	;mov ah, 4eh                     ; red back - yellow fore
+	;mov di, 5 * 80 * 2              ; 5th line
 
-	cld                             ; df = 0 (++)
+	cld                              ; df = 0 (++)
 
-    in al, 60h                      ; al = scancode
-    stosw                           ; es:[di++] = ax
+	call PrintRegisters
+	;in al, 60h                      ; al = scancode
+	;stosw                           ; es:[di++] = ax
+
+	jmp ChainOldISR
 
 	in al, 61h		;
 	mov ah, al		; blink enable/disable keyboard
@@ -63,17 +62,18 @@ newInt09	proc
 
 	mov al, 20h		; send End of Interrupt signal
 	out 20h, al		; Interrupt Controllet needs it
+				; done your deel - return former registers
 
-	pop es ds di si dx cx bx ax		; revive registers
-				                    ; done your deel - return former registers
-
-ChainOldISR:                        ; address of the old int09h
-	db 0eah                         ;   jmp in bytes
+ChainOldISR:                            ; address of the old int09h
+	pop es ds di si dx cx bx ax
+		db 0eah                 ;   jmp in bytes
 Old09Ofs	dw 0                    ;   offset - changes in line 17
 Old09Seg	dw 0                    ;   segment - changes in line 19
+ShowFrame	db 0
+		iret
+newInt09	endp
 
-	iret
-	endp
+include printreg.asm
 
 EOF:
 end		Main

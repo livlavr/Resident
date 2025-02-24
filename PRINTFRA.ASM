@@ -1,3 +1,8 @@
+.model tiny
+.186
+.code
+org 100h
+;*********
 ;--------------------------------------------------------------------|
 DI_MUL_160	macro
 		mov ax, di
@@ -12,9 +17,14 @@ COLOR		equ 20h
 PRESET		equ 01h
 VIDEOSEG	equ 0b800h
 ;--------------------------------------------------------------------|
+Start:
+	call PrintRegisters
+	
+	mov ax, 4c00h
+	int 21h
+;--------------------------------------------------------------------|
 PrintRegisters proc
-		push cs
-		pop ds
+		
 		call FrameCtr
 
 		mov si, offset cs:String
@@ -34,16 +44,16 @@ PrintRegisters proc
 PrintRegisters endp
 ;--------------------------------------------------------------------|
 FrameCtr	proc
-		
-		xor dx, dx			; dl = dh = 0
-		mov cs:FrameColor, COLOR
+		mov dl, 0h
+		mov dh, 0h
+		mov FrameColor, COLOR
 		
 		xor bx, bx
 		mov bl, PRESET
 		mov ax, bx
 		shl bx, 3
 		add bx, ax
-		mov ax, offset cs:FramesArray
+		mov ax, offset FramesArray
 		add ax, bx
 		mov Style, ax
 	
@@ -98,14 +108,14 @@ SetFramePosition	endp
 ;--------------------------------------------------------------------|
 DrawFrame	proc
 
-		mov ah, cs:FrameColor		; ah = Frame Color
-		mov word ptr si, cs:Style	; si = Style
+		mov ah, FrameColor		; ah = Frame Color
+		mov word ptr si, Style		; si = Style
 
 		call DrawLine
 
 		xor bx, bx
 		mov bl, dh			; bx = user_width
-		sub bx, 02h
+		sub bx, 2h
 
 RepeatedLines:	call DrawLine
 		sub si, 3h
@@ -127,9 +137,6 @@ DrawFrame	endp
 DrawLine	proc
 
 		push di
-		;push ds
-		;push cs
-		;pop ds
 
 		lodsb				; al = ds:[si++]
 		stosw				; es:[di] = ax
@@ -145,8 +152,9 @@ DrawLine	proc
 
 		pop di
 		add di, 0a0h		; TODO change to define constant
-		;pop ds
+
 		ret
+
 DrawLine	endp
 ;--------------------------------------------------------------------|
 ; Enter: DI - (top left corner of frame (Pixels)),
@@ -158,23 +166,20 @@ PrintMessage	proc
 
 		mov bx, di			; bx = di (top left corner of frame (Pixels))
 							; am i need it?
+
 		;mov byte ptr si, offset String	; si = &String
-		mov si, offset cs:String	; si = &String
+		mov si, offset String	; si = &String
 
 		call SetStringPosition		; Get line position to di register
 
 		xor ax, ax			; ax = 0
 					; TODO fix print error if line is empty
-		mov ah, cs:FrameColor	; TODO make useful set color
-		;push ds
-		;push cs
-		;pop ds
+		mov ah, FrameColor	; TODO make useful set color
 
 Print:		lodsb
 		stosw
 		loop Print
-		
-		;pop ds
+
 		ret
 
 PrintMessage	endp
@@ -216,9 +221,6 @@ GetStringLength	proc
 		xor ax, ax			; ax = 0
 		xor cx, cx			; cx = 0
 
-		;push ds
-		;push cs
-		;pop ds
 CountLength:	lodsb				; al = ds:[si++]
 		cmp al, '$'
 		jne CountLength
@@ -228,7 +230,6 @@ CountLength:	lodsb				; al = ds:[si++]
 		mov si, bx			; si = &String
 		dec cx				; cx -= 1
 
-		;pop ds
 		ret
 
 GetStringLength	endp
@@ -245,3 +246,5 @@ FramesArray	db "*-*I I*-*"
 Style		dw 0
 FrameColor	db 0
 ;--------------------------------------------------------------------|
+end	Start
+;************
