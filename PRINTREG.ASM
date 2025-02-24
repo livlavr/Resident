@@ -7,12 +7,12 @@ DI_MUL_160	macro
 endm
 ;--------------------------------------------------------------------|
 ; FrameColor	equ 20h
-; Style			equ 3
+; Style		equ 3
 ;--------------------------------------------------------------------|
 ;--------------------------------------------------------------------|
 PrintRegisters proc
 
-		mov si, String
+		mov si, offset String
 		call SetFramePosition
 		push di
 
@@ -137,7 +137,7 @@ PrintMessage	proc
 							; am i need it?
 
 		;mov byte ptr si, offset String	; si = &String
-		mov si, String	; si = &String
+		mov si, offset String	; si = &String
 
 		call SetStringPosition		; Get line position to di register
 
@@ -204,7 +204,7 @@ CountLength:	lodsb				; al = ds:[si++]
 GetStringLength	endp
 ;--------------------------------------------------------------------|
 .data
-String		dw "WORKING TEST$"
+String		db "WORKING TEST$"
 FramesArray	db "*-*I I*-*"
 		db "@#@# #@#@"
 		db "$~$+ +$~$"

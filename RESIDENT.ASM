@@ -56,7 +56,7 @@ Start:
 
 New09	proc
 
-	push ax es di		; save AX, ES, DI
+	push ax bx cx dx es ds		; save AX, ES, DI
 
 	mov ax, VIDEOSEG
 	mov es, ax
@@ -65,10 +65,10 @@ New09	proc
 
 	cld
 
-	call PrintRegisters
+	;call PrintRegisters
 
-	;in al, 60H
-	;stosw
+	in al, 60H
+	stosw
 
 	jmp ChainOldISR 	; jump to old ISR
 
@@ -83,10 +83,10 @@ New09	proc
 
 	iret
 
-include PrintRegisters.asm
+include printreg.asm
 
 ChainOldISR:	; Chain to old interrupt service routine
-		pop es di ax
+		pop ds es dx cx bx ax
 
 		db 0eah
 Old09Ofs	dw 0
