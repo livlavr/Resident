@@ -1,0 +1,163 @@
+Turbo Assembler	 Version 4.1	    02/24/25 02:15:57	    Page 1
+test.asm
+
+
+
+      1	0000			     .model tiny
+      2				     .186
+      3	0000			     .code
+      4				     org 100h
+      5	      =B800		     VIDEOSEG equ 0b800h
+      6
+      7				     ; F9 - commands - memory info - perexvaty -> release = klava rabotaet
+      8				     ; system queue after interruption list?
+      9				     ; zapisyvautsya scan codes	nazhatiy poka naprimer volkov otrisovyvaet sebya
+     10				     ; max 15 scan codes
+     11				     ; 16H 00H - analog	getchar()
+     12				     ; appartny	kolzevoy buffer	v klave
+     13				     ; preobrazovanie scan code	to ascii code
+     14
+     15	0100  B4 09		     Start:  mov ah, 09h
+     16	0102  BA 0166r			     mov dx, offset String
+     17	0105  CD 21			     int 21h
+     18
+     19					     ; ====================================================== ;
+     20
+     21	0107  33 C0			     xor ax, ax
+     22	0109  8E C0			     mov es, ax
+     23	010B  BB 0024			     mov bx, 09h * 4 ; interruption number (09H) * 4
+     24							     ; cause every address takes 2 byte	(segment + shift)
+     25
+     26					     ; nuzhen teper stary obrabotchik
+     27	010E  26: 8B 07			     mov ax, es:[bx]
+     28	0111  A3 0162r			     mov Old09Ofs, ax ;	ax?
+     29	0114  26: 8B 47	02		     mov ax, es:[bx + 2]
+     30	0118  A3 0164r			     mov Old09Seg, ax ;	ax?
+     31
+     32					     ; IMPORTANT LINE ;
+     33	011B  FA			     cli
+     34					     ; IMPORTANT LINE ;
+     35
+     36	011C  26: C7 07	0136r		     mov es:[bx], offset New09 ; my interrupt function
+     37
+     38	0121  0E			     push cs
+     39	0122  58			     pop ax
+     40
+     41	0123  26: 89 47	02		     mov es:[bx+2], ax ; put segment address
+     42
+     43					     ; IMPORTANT LINE ;
+     44	0127  FB			     sti
+     45					     ; IMPORTANT LINE ;
+     46
+     47	0128  CD 09			     int 09h ; CHECKER
+     48
+     49	012A  B8 3100			     mov ax, 3100h
+     50	012D  BA 016Er			     mov dx, offset EOP
+     51	0130  C1 EA 04			     shr dx, 4
+     52	0133  42			     inc dx	      ;	last paragraph
+     53	0134  CD 21			     int 21h
+     54
+     55					     ; ====================================================== ;
+     56
+     57				     ; ################################# ;
+Turbo Assembler	 Version 4.1	    02/24/25 02:15:57	    Page 2
+test.asm
+
+
+
+     58
+     59	0136			     New09   proc
+     60
+     61	0136  50 06 57			     push ax es	di	     ; save AX,	ES, DI
+     62
+     63	0139  B8 B800			     mov ax, VIDEOSEG
+     64	013C  8E C0			     mov es, ax
+     65	013E  B4 4C			     mov ah, 4ch
+     66	0140  BF 0320			     mov di, 5*80*2
+     67
+     68	0143  FC			     cld
+     69
+     70	0144  E4 60			     in	al, 60H
+     71	0146  AB			     stosw
+     72
+     73	0147  EB 15 90			     jmp ChainOldISR	     ; jump to old ISR
+     74
+     75	014A  E4 61			     in	al, 61h
+     76	014C  8A E0			     mov ah, al
+     77	014E  0C 80			     or	al, 80h
+     78	0150  E6 61			     out 61h, al
+     79	0152  8A C4			     mov al, ah
+     80	0154  E6 61			     out 61h, al ; migaem starshim bitom v 61 porty
+     81
+     82					     ; nuzhno chtoby kontroller	vozobnovil obrabotky preryvani
+     83					     ; signal chto preryvanie obrabotano
+     84					     ; podacaha	signala	EOI (end of interrupt)
+     85
+     86	0156  B0 20			     mov al, 20h
+     87	0158  E6 20			     out 20h, al
+     88
+     89	015A  07 5F 58			     pop es di ax    ; restore ES, DI, AX
+     90
+     91					     ; teper mozhno vozvrachatsya
+     92					     ; forma vozvrata iret - interrupt return -	vozvrachaetsya na adress
+     93					     ; i vosstanavliavet flagi
+     94					     ; else disbalance stacka
+     95
+     96	015D  CF			     iret
+     97
+     98	015E			     ChainOldISR:    ; Chain to	old interrupt service routine
+     99						     ;
+    100	015E  07 5F 58				     pop es di ax
+    101
+    102	0161  EA				     db	0eah
+    103
+    104	0162  0000		     Old09Ofs	     dw	0
+    105	0164  0000		     Old09Seg	     dw	0
+    106
+    107	0166				     endp
+    108
+    109	0166  48 65 6C 6C 6F 0D	0A+  String  db	"Hello", 0dh, 0ah, '$'
+    110	      24
+    111
+    112	016E			     EOP:
+    113
+    114				     end     Start
+Turbo Assembler	 Version 4.1	    02/24/25 02:15:57	    Page 3
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/24/25"
+??FILENAME			  Text	 "test	  "
+??TIME				  Text	 "02:15:57"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0103H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 TEST
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+CHAINOLDISR			  Near	 DGROUP:015E
+EOP				  Near	 DGROUP:016E
+NEW09				  Near	 DGROUP:0136
+OLD09OFS			  Word	 DGROUP:0162
+OLD09SEG			  Word	 DGROUP:0164
+START				  Near	 DGROUP:0100
+STRING				  Byte	 DGROUP:0166
+VIDEOSEG			  Number B800
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  016E Word	  Public  CODE
+

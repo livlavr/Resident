@@ -1,6 +1,8 @@
-CODE	SEGMENT				; Начало сегмента кода
-	ORG	100H			; Смещение 100H для программы типа COM
-	ASSUME	CS:CODE,DS:CODE		; Назначение сегментов
+.model tiny
+.186
+.code					; Начало сегмента кода
+ORG	100H			; Смещение 100H для программы типа COM
+ASSUME	CS:CODE,DS:CODE		; Назначение сегментов
 BEGIN:	JMP	START			; Переход на выполнение вспомогательной части
 	OLD_VEC	LABEL	DWORD
 	IP_OLD	DW	?		; Определение FAR метки
@@ -44,8 +46,7 @@ START:					; НАЧАЛО ВСПОМОГАТЕЛЬНОЙ ЧАСТИ
 	LEA	DX,PRO			; резидентной процедуры PRO
 	INT	21H
 	LEA	DX,START			; Адрес конца резидентной части
-	INT	27H			; KEEP
-CODE	ENDS				; Конец сегмента кода
+	INT	27H			; KEEP				; Конец сегмента кода
 	END	BEGIN			; Конец программы
 
 Hosted by uCoz
