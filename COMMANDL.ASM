@@ -5,16 +5,22 @@
 ;--------------------------------------------------------------------|
 GetCMDLArgs	proc
 
-		call GetNumber			; bl = length of frame
-		mov dl, bl
-		call GetNumber			; bl = Height of frame
-		mov dh, bl
-		call GetColor			; bl = ColorHexNumber
-		mov FrameColor, bl
-		call GetNumber			; bl = NumberOfPreset
+		mov dl, 0h
+		mov dh, 0h
+		mov FrameColor, 20h
+		mov bl, 3h
 		call SetStyle			; Style = Preset
 		mov String, si
 		;call GetString			; String = Frame Message(si)
+
+mov ax, bx			;
+shl bx, 3			; bx *= 9
+add bx, ax			;
+
+xor ax, ax
+mov ax, offset FramesArray
+add ax, bx
+mov Style, ax
 
 		ret
 
@@ -55,10 +61,10 @@ GetColor	proc
 		xor bx, bx
 		xor ax, ax
 
-Digit:		lodsb				; ax = ds:[si++]
+Digit:		lodsb			; ax = ds:[si++]
 		cmp ax, 39h			; ax <= '9'
 		jg BigLetter
-		cmp ax, 30h 			; ax >= '0'
+		cmp ax, 30h 		; ax >= '0'
 		jl BigLetter
 
 		sub ax, 30h
@@ -69,7 +75,7 @@ Digit:		lodsb				; ax = ds:[si++]
 BigLetter:
 		cmp ax, 46h			; ax <= 'F'
 		jg SmallLetter
-		cmp ax, 41h 			; ax >= 'A'
+		cmp ax, 41h 		; ax >= 'A'
 		jl SmallLetter
 
 		sub ax, 37h
