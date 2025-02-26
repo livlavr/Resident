@@ -28,7 +28,7 @@ PrintRegisters proc
 		call DrawFrame
 
 		pop di
-		call PrintMessage
+		;call PrintMessage
 
        		ret
 PrintRegisters endp
@@ -234,7 +234,15 @@ CountLength:	lodsb				; al = ds:[si++]
 GetStringLength	endp
 ;--------------------------------------------------------------------|
 .data
-String		db "WORKING TEST$"
+String		db "AX="
+AXREG		dw 0
+		db "BX="
+BXREG		dw 0
+		db "CX="
+CXREG		dw 0
+		db "DX="
+DXREG		dw 0
+		db "$"
 FramesArray	db "*-*I I*-*"
 		db "@#@# #@#@"
 		db "$~$+ +$~$"
