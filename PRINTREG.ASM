@@ -89,7 +89,7 @@ SkipAutoHeight:	;mov di, SCREENW			; di = 25 (screen_width)
 
 		;add di, bx			; di += bx
 		
-		mov di, 0a0h
+		mov di, 140h
 		sub di, 16h
 		 
 		ret
@@ -251,15 +251,47 @@ CountLength:	lodsb				; al = ds:[si++]
 
 GetStringLength	endp
 ;--------------------------------------------------------------------|
+; Enter: si - Address of Register String output variable
+;--------------------------------------------------------------------|
+HexToAscii	proc
+		
+		add si, 3h
+		
+		;cld
+
+		mov bx, ax
+@@Loop:		shr bx, 4
+		shl bx, 4
+		sub ax, bx
+		shr bx, 4
+
+		cmp ax, 09h
+		jg GetLetter
+
+GetNumber:	add ax, 30h
+		jmp OutputResult
+
+GetLetter:	add ax, 37h
+		
+OutputResult:	mov byte ptr cs:[si], al
+		dec si
+		cmp bx, 0h
+		mov ax, bx
+		jne @@Loop
+
+@@Exit:		ret
+
+HexToAscii	endp
+;--------------------------------------------------------------------|
 .data
 String		db "AX="
-AXREG		db "1111"
+AXREG		db "0000"
 		db "BX="
-BXREG		db "2222"
+BXREG		db "0000"
 		db "CX="
-CXREG		db "3333"
+CXREG		db "0000"
 		db "DX="
-DXREG		db "4444"
+DXREG		db "0000"
 		db "$"
 FramesArray	db "*-*I I*-*"
 		db "@#@# #@#@"

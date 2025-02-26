@@ -68,8 +68,29 @@ UpdateFrame08	proc
 	;!mov DXREG, dx	
 
 	push ax bx cx dx si di ds es	; save registers not to fuck them up
+	push dx cx bx ax	
 
 	cld                              ; df = 0 (++)
+
+	pop ax
+	mov bx, offset cs:AXREG
+	mov si, bx
+	call HexToAscii	 
+
+	pop ax	
+	mov bx, offset cs:BXREG
+	mov si, bx
+	call HexToAscii
+
+	pop ax
+	mov bx, offset cs:CXREG
+	mov si, bx
+	call HexToAscii
+	
+	pop ax
+	mov bx, offset cs:DXREG
+	mov si, bx
+	call HexToAscii
 
 	;cmp cs:ShowFrame, 'A'
 	
