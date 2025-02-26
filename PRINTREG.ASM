@@ -12,7 +12,7 @@ COLOR		equ 20h
 PRESET		equ 01h
 VIDEOSEG	equ 0b800h
 ;--------------------------------------------------------------------|
-PrintRegisters proc
+PrintRegisters  proc
 		push cs
 		pop ds
 		call FrameCtr
@@ -28,14 +28,15 @@ PrintRegisters proc
 		call DrawFrame
 
 		pop di
-		;call PrintMessage
+		call PrintMessage
 
        		ret
-PrintRegisters endp
+PrintRegisters  endp
 ;--------------------------------------------------------------------|
 FrameCtr	proc
 		
-		xor dx, dx			; dl = dh = 0
+		mov dl, 0bh			; dl = dh = 0
+		mov dh, 06h
 		mov cs:FrameColor, COLOR
 		
 		xor bx, bx
@@ -56,38 +57,41 @@ FrameCtr	endp
 ;--------------------------------------------------------------------|
 SetFramePosition	proc
 
-		xor ax, ax
-		mov al, dl
-		cmp ax, 0h
-		jne SkipAutoLength
+		;xor ax, ax
+		;mov al, dl
+		;cmp ax, 0h
+		;jne SkipAutoLength
 
-		call GetStringLength
-		xor ax, ax
-		add cx, 4h			; magic const sorry
-		mov dl, cl
+		;call GetStringLength
+		;xor ax, ax
+		;add cx, 4h			; magic const sorry
+		;mov dl, cl
 
-SkipAutoLength:	mov al, dh
-		cmp ax, 0h
-		jne SkipAutoHeight
+SkipAutoLength:	;mov al, dh
+		;cmp ax, 0h
+		;jne SkipAutoHeight
 
-		mov dh,	5h			; TODO fix
+		;mov dh,	5h			; TODO fix
 
-SkipAutoHeight:	mov di, SCREENW			; di = 25 (screen_width)
+SkipAutoHeight:	;mov di, SCREENW			; di = 25 (screen_width)
 
-		xor ax, ax			; ax = 0
-		mov al, dh			; ax = user_height
-		sub di, ax			; di = screen_w - user_h
+		;xor ax, ax			; ax = 0
+		;mov al, dh			; ax = user_height
+		;sub di, ax			; di = screen_w - user_h
 
-		shr di, 1			; di //= 2
-		mov bx, SCREENL			; bx = 80 (screen_length)
-		mov al, dl			; ax = user_length
-		sub bx, ax			; bx -= ax
-		shr bx, 1
-		shl bx, 1
-		DI_MUL_160			; di *= 160 (Broke ax)
+		;shr di, 1			; di //= 2
+		;mov bx, SCREENL			; bx = 80 (screen_length)
+		;mov al, dl			; ax = user_length
+		;sub bx, ax			; bx -= ax
+		;shr bx, 1
+		;shl bx, 1
+		;DI_MUL_160			; di *= 160 (Broke ax)
 
-		add di, bx			; di += bx
-
+		;add di, bx			; di += bx
+		
+		mov di, 0a0h
+		sub di, 16h
+		 
 		ret
 
 SetFramePosition	endp
@@ -169,11 +173,21 @@ PrintMessage	proc
 		;push ds
 		;push cs
 		;pop ds
+		push cs
+		pop ds
+		mov cx, 7
+		lodsb
 
-Print:		lodsb
-		stosw
+Print:		stosw
+		lodsb
 		loop Print
-		
+
+		add di, 92h		; start of the next line
+
+		cmp al, '$'
+		mov cx, 7
+		jne Print 		
+
 		;pop ds
 		ret
 
@@ -187,22 +201,26 @@ PrintMessage	endp
 ;--------------------------------------------------------------------|
 SetStringPosition	proc
 
-		xor cx, cx		; cx = 0
-		mov cl, dh		; cx = Width
-		shr cx, 1		; cx /= 2 (cx = 1/2 Width)
-		mov di, cx		; di = cx (di = 1/2 Width)
-		DI_MUL_160		; di *= 160 (di = 160px * 1/2 Width)
-		add di, bx	        ; di += top left corner of frame (Pixels)
+		;xor cx, cx		; cx = 0
+		;mov cl, dh		; cx = Width
+		;shr cx, 1		; cx /= 2 (cx = 1/2 Width)
+		;mov di, cx		; di = cx (di = 1/2 Width)
+		;DI_MUL_160		; di *= 160 (di = 160px * 1/2 Width)
+		;add di, bx	        ; di += top left corner of frame (Pixels)
 					; TODO add shift for multiline
-		call GetStringLength
+		;call GetStringLength
 
-		xor ax, ax		; ax = 0
-		mov al, dl		; ax = user_length
-		sub ax, cx		; ax = user_length - length_of_word(cx)
-		add di, ax		; di += ax
-		shr di, 1
-		shl di, 1
+		;xor ax, ax		; ax = 0
+		;mov al, dl		; ax = user_length
+		;sub ax, cx		; ax = user_length - length_of_word(cx)
+		;add di, ax		; di += ax
+		;shr di, 1
+		;shl di, 1
 
+		;mov ax, di
+		add di, 4
+		add di, 0a0h		
+				
 		ret
 
 SetStringPosition	endp
@@ -235,13 +253,13 @@ GetStringLength	endp
 ;--------------------------------------------------------------------|
 .data
 String		db "AX="
-AXREG		dw 0
+AXREG		db "1111"
 		db "BX="
-BXREG		dw 0
+BXREG		db "2222"
 		db "CX="
-CXREG		dw 0
+CXREG		db "3333"
 		db "DX="
-DXREG		dw 0
+DXREG		db "4444"
 		db "$"
 FramesArray	db "*-*I I*-*"
 		db "@#@# #@#@"

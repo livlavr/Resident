@@ -62,12 +62,10 @@ CheckButtons	proc
 CheckButtons	endp
 ;--------------------------------------------------------------------|
 UpdateFrame08	proc
-	mov AXREG, ax
-	mov BXREG, bx
-	mov CXREG, cx
-	mov DXREG, dx	
-
-	
+	;!mov AXREG, ax
+	;!mov BXREG, bx
+	;!mov CXREG, cx
+	;!mov DXREG, dx	
 
 	push ax bx cx dx si di ds es	; save registers not to fuck them up
 
