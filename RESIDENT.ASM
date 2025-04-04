@@ -16,17 +16,13 @@ DrawFrame09		proc
 	push ax bx cx dx si di ds es
 	cld
 
-	;call CheckButtons
-
 	xor ax, ax
 	in al, 60h
 	cmp al, FLAG_KEY
-	
-	jne ChainOld09ISR
-	
-	;mov cs:ShowFrame, 'A'
-	xor cs:ShowFrame, 01h
 
+	jne ChainOld09ISR
+
+	xor cs:ShowFrame, 01h
 
 	jmp ChainOld09ISR
 
@@ -41,43 +37,18 @@ Old09Seg	dw 0                    ;   segment - changes in line 19
 
 DrawFrame09		endp
 ;--------------------------------------------------------------------|
-CheckButtons	proc
-
-	xor ax, ax
-	;mov ah, 01h
-	;int 21h						; Reads code from standart input
-	;cmp al, 0h
-	;jne @@Exit
-	;int 21h
-	;cmp al, 85h
-	;jne @@Exit
-
-	;in	al, 60h
-	;cmp	al, FLAG_KEY
-	;jne @@Exit
-	;xor ShowFrame, 01h
-
-@@Exit:	ret
-
-CheckButtons	endp
-;--------------------------------------------------------------------|
 UpdateFrame08	proc
-	;!mov AXREG, ax
-	;!mov BXREG, bx
-	;!mov CXREG, cx
-	;!mov DXREG, dx	
-
 	push ax bx cx dx si di ds es	; save registers not to fuck them up
-	push dx cx bx ax	
+	push dx cx bx ax
 
 	cld                              ; df = 0 (++)
 
 	pop ax
 	mov bx, offset cs:AXREG
 	mov si, bx
-	call HexToAscii	 
+	call HexToAscii
 
-	pop ax	
+	pop ax
 	mov bx, offset cs:BXREG
 	mov si, bx
 	call HexToAscii
@@ -86,22 +57,11 @@ UpdateFrame08	proc
 	mov bx, offset cs:CXREG
 	mov si, bx
 	call HexToAscii
-	
+
 	pop ax
 	mov bx, offset cs:DXREG
 	mov si, bx
 	call HexToAscii
-
-	;cmp cs:ShowFrame, 'A'
-	
-	;mov ax, VIDEOSEG
-	;mov es, ax
-	;mov di, 5*80*2
-
-	;mov al, cs:ShowFrame
-	;mov ah, 01000000b	
-
-	;stosw
 
 	cmp cs:ShowFrame, 01h
 
@@ -109,17 +69,6 @@ UpdateFrame08	proc
 	call PrintRegisters
 
 	jmp ChainOld08ISR
-
-;	in al, 61h		;
-;	mov ah, al		; blink enable/disable keyboard
-;	or al, 80h		; to let keyboard controller know
-;	out 61h, al		; that changes done
-;	mov al, ah		;
-;	out 61h, al		; Keyboard Controller needs it
-;
-;	mov al, 20h		; send End of Interrupt signal
-;	out 20h, al		; Interrupt Controllet needs it
-;				; done your deel - return former registers
 
 ChainOld08ISR:                            ; address of the old int08h
 
